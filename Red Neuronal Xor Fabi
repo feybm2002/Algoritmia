@@ -1,32 +1,48 @@
-#Red Neuronal Xor
-#Flores Diaz Fabiola Montserrat
-
+#Flores Diaz Fabiola
+#Perceptron XOR
 import numpy as np 
-from keras.models import Sequential
-from keras.layers.core import Dense 
-# Se importan las bibliotecas necesarias
 
-training_data = np.array([[0,0],[0,1],[1,0],[1,1]], "float32")
-target_data = np.array([[0],[1],[1],[0]], "float32")
-# Se definen los datos de entrenamiento y las etiquetas objetivo para la compuerta XOR
+def sigmoid(x):
+    # Función de activación sigmoidal
+    return 1 / (1 + np.exp(-x))
 
-model = Sequential() # Se crea un modelo secuencial vacío
+def sigmoid_deriv(x):
+    # Derivada de la función de activación sigmoidal
+    return sigmoid(x) * (1 - sigmoid(x))
 
-model.add(Dense(16,input_dim=2, activation='relu')) # Se agrega una capa oculta con 16 neuronas y función de activación ReLU
-model.add(Dense(2, activation='sigmoid')) # Se agrega una capa de salida con 2 neuronas y función de activación sigmoide
-# Se define la estructura de la red neuronal
+training_data = np.array([[0,0],[0,1],[1,0],[1,1]])
+target_data = np.array([[0],[1],[1],[0]])
 
-model.compile(loss='mean_squared_error',
-               optimizer='adam',
-               metrics=['binary_accuracy'])
-# Se compila el modelo con la función de pérdida MSE, el optimizador Adam y la métrica de precisión binaria
+# Definimos los pesos de la red neuronal
+w1 = np.random.randn(2, 16)
+w2 = np.random.randn(16, 1)
 
-model.fit(training_data, target_data, epochs=1000)
-# Se entrena el modelo con los datos de entrenamiento y las etiquetas objetivo
+# Definimos los hiperparámetros
+lr = 0.1
+epochs = 10000
 
-scores = model.evaluate(training_data, target_data)
-# Se evalúa el modelo con los datos de entrenamiento y las etiquetas objetivo
+# Entrenamos el modelo
+for i in range(epochs):
+    # Forward pass
+    hidden_layer = sigmoid(np.dot(training_data, w1))
+    output_layer = sigmoid(np.dot(hidden_layer, w2))
+    
+    # Backward pass
+    error = target_data - output_layer
+    d_output = error * sigmoid_deriv(output_layer)
+    error_hidden = d_output.dot(w2.T)
+    d_hidden = error_hidden * sigmoid_deriv(hidden_layer)
+    
+    # Actualizamos los pesos
+    w2 += hidden_layer.T.dot(d_output) * lr
+    w1 += training_data.T.dot(d_hidden) * lr
+    
+# Hacemos una predicción con los datos de entrenamiento
+hidden_layer = sigmoid(np.dot(training_data, w1))
+output_layer = sigmoid(np.dot(hidden_layer, w2))
+prediction = np.round(output_layer)
 
-print("\n%s: %.2f%%" % (model.metrics_name[1], scores[1]*100))
-print(model.predict(training_data).round())
-# Se imprime la precisión binaria y las predicciones de los datos de entrenamiento
+# Evaluamos la precisión del modelo
+accuracy = np.mean(prediction == target_data) * 100
+print("Precisión: {}%".format(accuracy))
+print(prediction)
